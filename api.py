@@ -2,24 +2,33 @@ from email_helper import send_email
 from geolocation_helper import clinician_out_of_range
 import requests
 import time
+import threading
 
 url = "https://3qbqr98twd.execute-api.us-west-2.amazonaws.com/test"
 MAX_QUERIES = 100  # Maximum number of queries per second
 NUM_CLINICIANS = 6  # Number of clinicians to ping
 
-def ping_all_clinicians():
+active_clinicians = set()
+
+def ping_clinician(clinician_id):
+    global active_clinicians
     while True:
         # We don't want more than 100 queries per second and we have 6 clinicians so each clinician can
         # ping ~16 times per minute which is every 3.75 seconds
         # We also want to make sure we are pinged within 5 minutes
         start = time.time()
-        for clinician_id in range(1, 7):
-            get_clinician_status(clinician_id)
+        in_range = get_clinician_status(clinician_id)
         end = time.time()
+        if not in_range:
+            active_clinicians.remove(clinician_id)
+            time.sleep(5 * 60)  # Wait for 5 minutes before checking again
+            active_clinicians.add(clinician_id)
+            continue
         time_taken = end - start
-        print(f"Time taken for all queries: {time_taken} seconds")
-        interval = min(60 - time_taken, (60 - time_taken)/(MAX_QUERIES//NUM_CLINICIANS))
-        print(f"interval: {interval} seconds")
+        # print(f"Time taken for all queries: {time_taken} seconds")
+        interval = 5 - time_taken
+        # interval = min(5 * 60 - time_taken, (60 - time_taken)/(MAX_QUERIES//NUM_CLINICIANS))
+        # print(f"interval: {interval} seconds")
         time.sleep(interval)  # Wait for time_interval seconds before checking again
 
 def get_clinician_status(clinician_id):
@@ -33,13 +42,26 @@ def get_clinician_status(clinician_id):
         # if clinician_id out of range, send email
         if clinician_out_of_range(clinician_id, data):
             send_email(clinician_id, "out_of_range")
+            return False
+        else:
+            return True
     except Exception as error:
         print(f"Error fetching clinician status: {error}")
         send_email(clinician_id, "error", error)
+        return False
 
 def __main__():
     try:
-        ping_all_clinicians()
+        for clinician_id in range(1, NUM_CLINICIANS + 1):
+            active_clinicians.add(clinician_id)
+
+        threads = []
+    
+        for clinician_id in range(1, NUM_CLINICIANS + 1):
+            thread = threading.Thread(target=ping_clinician, args=(clinician_id,))
+            threads.append(thread)
+            thread.start()
+
     except Exception as e:
         print(f"Error in pinging clinicians: {e}")
     
