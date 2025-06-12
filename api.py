@@ -26,9 +26,10 @@ def ping_clinician(clinician_id):
             continue
         time_taken = end - start
         # print(f"Time taken for all queries: {time_taken} seconds")
-        interval = 5 - time_taken
+        # interval = 5 - time_taken
         # interval = min(5 * 60 - time_taken, (60 - time_taken)/(MAX_QUERIES//NUM_CLINICIANS))
         # print(f"interval: {interval} seconds")
+        interval = 3.75
         time.sleep(interval)  # Wait for time_interval seconds before checking again
 
 def get_clinician_status(clinician_id):
