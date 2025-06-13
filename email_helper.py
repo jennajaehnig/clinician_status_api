@@ -14,6 +14,9 @@ sender="jenna.jaehnig@gmail.com"
 receiver="jjaehnig@umich.edu"
 
 def send_email(clinician_id, msg_type, erorr_msg=None):
+    """
+    This function sends an email notification if a clinician is out of range or if there is an error fetching the clinician's status.
+    """
     if msg_type == "out_of_range":
         text=f"clinician_id {clinician_id} is out of range"
     elif msg_type == "error":
