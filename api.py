@@ -46,21 +46,27 @@ def get_clinician_status(clinician_id):
     if (clinician_id < 1 or clinician_id > 7):
         print(f"Invalid clinician_id: {clinician_id}. The clinician_id must be between 1 and 6.")
         return
-    response = requests.get(f"{url}/clinicianstatus/{clinician_id}")
-    if response.status_code == 200:
-        data = response.json()
-        # print(f"Success: {data}")
-        # if clinician_id out of range, send email
-        out_of_range = clinician_out_of_range(clinician_id, data)
-        if out_of_range:
-            send_email(clinician_id, "out_of_range")
-            return False
-        else:
-            return True
+    try:
+        response = requests.get(f"{url}/clinicianstatus/{clinician_id}")
+        # response = readtimeout()
+    except Exception as e:
+        print(f"Error fetching clinician status for {clinician_id}: {e}")
+        send_email(clinician_id, "error", str(e))
     else:
-        print(f"Error fetching clinician status for {clinician_id}: {response.status_code} - {response.text}")
-        send_email(clinician_id, "error", response.text)
-        return False
+        if response.status_code == 200:
+            data = response.json()
+            # print(f"Success: {data}")
+            # if clinician_id out of range, send email
+            out_of_range = clinician_out_of_range(clinician_id, data)
+            if out_of_range:
+                send_email(clinician_id, "out_of_range")
+                return False
+            else:
+                return True
+        else:
+            print(f"Error fetching clinician status for {clinician_id}: {response.status_code} - {response.text}")
+            send_email(clinician_id, "error", response.text)
+            return False
 
 
 def __main__():

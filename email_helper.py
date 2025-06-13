@@ -27,10 +27,10 @@ def send_email(clinician_id, msg_type, erorr_msg=None):
     message["To"] = receiver
     context = ssl.create_default_context()
 
-    try:
-        with smtplib.SMTP(SMTP_SERVER, SMTP_PORT) as server:
-            server.starttls(context=context)
-            server.login(sender, PASSWORD)
-            server.sendmail(sender, receiver, message.as_string())
-    except Exception as e:
-        print(f"Failed to send email: {e}")
+    # try:
+    with smtplib.SMTP(SMTP_SERVER, SMTP_PORT) as server:
+        server.starttls(context=context)
+        server.login(sender, PASSWORD)
+        server.sendmail(sender, receiver, message.as_string())
+    # except Exception as e:
+    #     print(f"Failed to send email: {e}")
